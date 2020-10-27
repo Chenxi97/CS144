@@ -14,6 +14,7 @@ class StreamReassembler {
     // Your code here -- add private members as necessary.
 
     struct block_node {
+      public:
         size_t start;
         size_t end;
         std::string data;

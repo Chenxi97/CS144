@@ -59,8 +59,12 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
 }
 
 bool StreamReassembler::merge_block(block_node &dst, const block_node &src) {
-    if (src.end < dst.start || src.start > dst.end || (src.start == dst.start && src.end == dst.end)) {
+    if (src.end < dst.start || src.start > dst.end) {
         return false;
+    }
+    if (src.start <= dst.start && src.end >= dst.end) {
+        dst = src;
+        return true;
     }
     if (src.end > dst.end) {
         size_t len = src.end - dst.end;
