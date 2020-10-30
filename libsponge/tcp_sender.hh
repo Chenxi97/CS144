@@ -7,7 +7,26 @@
 #include "wrapping_integers.hh"
 
 #include <functional>
+#include <map>
 #include <queue>
+
+class Timer {
+  private:
+    size_t _time_elapsed{};
+    size_t _rto;
+    bool _expired{};
+
+  public:
+    Timer(size_t timeout) : _rto(timeout) {}
+    void tick(const size_t ms_since_last_tick);
+    void start();
+    void expire() { _expired = true; }
+    size_t get_rto() const { return _rto; }
+    void set_rto(const size_t rto) { _rto = rto; }
+    bool is_expired() const { return _expired; }
+};
+
+enum class Sender_State { CLOSED, SYN_SENT, SYN_ACKED, FIN_SENT };
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -31,6 +50,28 @@ class TCPSender {
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    Sender_State _state{Sender_State::CLOSED};
+
+    uint64_t _ackno{0};
+
+    Timer _timer;
+
+    uint64_t _window_size{0};
+
+    uint32_t _consecutive_retransmissions{0};
+
+    bool need_send_fin() { return _state == Sender_State::SYN_ACKED && _stream.eof(); }
+
+    std::map<uint64_t, TCPSegment> _outstanding_seg{};
+
+    uint64_t bytes_need_send() { return _window_size > bytes_in_flight() ? _window_size - bytes_in_flight() : 0; }
+
+    void send_segment(bool syn, bool fin, std::optional<std::string> data);
+
+    TCPSegment make_segment(bool syn, bool fin, std::optional<std::string> data);
+
+    void send_fin_segment(std::optional<std::string> data);
 
   public:
     //! Initialize a TCPSender
