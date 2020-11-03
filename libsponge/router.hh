@@ -49,6 +49,18 @@ class Router {
     //! datagram's destination address.
     void route_one_datagram(InternetDatagram &dgram);
 
+    struct Route {
+        uint32_t route_prefix{};
+        uint8_t prefix_length{};
+        std::optional<Address> next_hop{};
+        size_t interface_num{};
+        Route() {}
+        Route(uint32_t prefix, uint8_t len, std::optional<Address> next, size_t num)
+            : route_prefix(prefix), prefix_length(len), next_hop(next), interface_num(num) {}
+    };
+
+    std::vector<Route> _routes{};
+
   public:
     //! Add an interface to the router
     //! \param[in] interface an already-constructed network interface
